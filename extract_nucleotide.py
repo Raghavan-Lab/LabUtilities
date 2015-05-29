@@ -24,7 +24,7 @@ def get_options():
 
 def _next_in_request_list(input_list):
     """ Returns the next line in the input list """
-    with open(input_list) as user_list:
+    with open(input_list, 'U') as user_list:
         for line in user_list:
             yield line.rstrip()
 
