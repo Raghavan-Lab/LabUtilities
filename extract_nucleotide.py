@@ -5,6 +5,7 @@ more flexible.
 
 
 """
+import os
 import argparse
 from Bio import SeqIO
 from collections import namedtuple
@@ -87,13 +88,17 @@ def _find_item(gb_dict, item_id):
         return
 
 
-def main():
+def main(genbank_file=None, target_list=None):
     """ Extract nucleotide sequences from a genbank file using a list of targets to grab.
      Output results in fasta format
 
     """
-    options = get_options()
-    genbank_dict = _get_genbank_dict(options.gb)
+    if genbank_file is None or target_list is None:
+        options = get_options()
+        genbank_file = options.gb
+        target_list = options.list
+
+    genbank_dict = _get_genbank_dict(genbank_file)
 
     def _print_fasta(nucl, genome_feature):
         """
@@ -118,23 +123,23 @@ def main():
         if 'product' in genome_feature.data.qualifiers:
             product = genome_feature.data.qualifiers['product'][0]
 
-        start = genome_feature.data.location.start - 1  # index starts at zero, but genome starts at 1
-        end = genome_feature.data.location.end - 1  # index starts at zero, but genome starts at 1
+        start = genome_feature.data.location.start
+        end = genome_feature.data.location.end
         # Fixme this script isn't taking into account the strand when cutting out the sequence
         # strand = genome_feature.data.location.strand
         seq = nucl[start:end]
 
-        print('>{locus_tag} | {protein_id} | {gi_number} | {product}\n'
-              '{seq}\n'.format(locus_tag=locus_tag,
-                               protein_id=protein_id,
-                               gi_number=gi_number,
-                               product=product,
-                               seq=seq))
+        return ('>{locus_tag} | {protein_id} | {gi_number} | {product}\n'
+                '{seq}\n'.format(locus_tag=locus_tag,
+                                 protein_id=protein_id,
+                                 gi_number=gi_number,
+                                 product=product,
+                                 seq=seq))
 
     #
     # Loop through the provided list, and build a unique list of features
     result_basket = {}
-    for target in _next_in_request_list(options.list):
+    for target in _next_in_request_list(target_list):
         # Extract the target from the item on the list
         feature = _find_item(genbank_dict, target)
 
@@ -149,8 +154,9 @@ def main():
         result_basket[feature.locus] = feature
 
     for k in result_basket:
-        _print_fasta(genbank_dict['_seq'], result_basket[k])
+        yield _print_fasta(genbank_dict['_seq'], result_basket[k])
 
 
 if __name__ == '__main__':
-    main()
+    for result in main():
+        print(result)
