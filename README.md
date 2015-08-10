@@ -2,7 +2,7 @@
 Collection of scripts that might be useful in daily lab work
 
 
-######split_fasta.py
+######split_fasta.py -n reads_per_output_file -f large_fasta_file
 Splits a multi-sequence fasta file into multiple files containing n number of reads.
    Examples:
    Split a very large fasta file into smaller files containing 10,000 reads
